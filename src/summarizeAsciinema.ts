@@ -8,8 +8,10 @@ import { Readable, type WritableOptions } from "node:stream";
 import { Writable } from "node:stream";
 import { StringDecoder } from "node:string_decoder";
 import { text } from "node:stream/consumers";
-import { readFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { readFile, unlink } from "node:fs/promises";
+import { basename, join } from "node:path";
+import fs from "node:fs/promises";
+import { tmpdir } from "node:os";
 
 const execFileAsync = promisify(execFile);
 export async function summarizeAsciinema(opts: CliOptions, filePath: string) {
@@ -37,7 +39,8 @@ export async function summarizeAsciinema(opts: CliOptions, filePath: string) {
   if (opts.converter === "cleaner")
     cleanText = cleanTerminalOutput(outputLines);
   else if (opts.converter === "asciinema-convert") {
-    const txtPath = filePath + ".txt";
+    const tmpDir = await fs.mkdtemp(join(tmpdir(), "asciinema-convert"));
+    const txtPath = join(tmpDir, "log.txt");
     // start child_process args: asciinema convert - -
     const subproc = await execFileAsync("asciinema", [
       "convert",
@@ -51,6 +54,7 @@ export async function summarizeAsciinema(opts: CliOptions, filePath: string) {
       console.error("Error during asciinema conversion:", subproc.stderr);
     }
     cleanText = await readFile(txtPath, "utf-8");
+    await unlink(txtPath);
   } else {
     throw Error(
       `Unknown converter option: ${opts.converter}. Supported options are 'cleaner' and 'asciinema-convert'.`
