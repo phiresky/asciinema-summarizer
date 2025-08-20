@@ -17,6 +17,7 @@ export async function queryOllama(
   const prompt = `Below is a SSH session transcript to production infrastructure.
 Please analyze this terminal session output and provide a concise summary of what was done.
 If anything security-critical was done or this might be someone trying to exploit or exfiltrate data, mention it.
+Note that for commands that take over the whole screen like htop or vim, the output may not be shown.
 Do not include any sensitive data such as API keys or passwords in the response.
 The summary can use bullet points or a numbered list, but should be a maximum of 10 sentences.
 
